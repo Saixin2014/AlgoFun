@@ -14,35 +14,34 @@ namespace Sai.Cos.DivideWater
             public int to;
             public int water;
         }
-        public struct BucketState
-        {
-            public int b0;
-            public int b1;
-            public int b2;
-            public TagAction curAction;
-        }
+
         static int[] FullBacket = { 8, 5, 3 };
+        static Stack<int[]> StackState = new Stack<int[]>();//存放数组数据的堆栈
+        static int ResultCount = 0;//求解的计数
         static void Main(string[] args)
         {
-            QueState.Enqueue(new int[]{8,0,0 });
-            SeachState(QueState);
+            StackState.Push(new int[] { 8, 0, 0 });
+            SeachState(StackState);
             Console.ReadKey();
         }
 
-        static void SeachState(Queue<int[]> states)
+        static void SeachState(Stack<int[]> states)
         {
-            int[][] ar = states.ToArray<int[]>();
-            int[] curr = ar[states.Count - 1];
+            //int[][] ar = states.ToArray<int[]>();
+            int[] curr = states.Peek();
             if (curr[0] == 4 && curr[1] == 4)
             {            //找到正确解
                 var rs = "";
-
-                //int[][] ar = QueState.ToArray<int[]>();
-                foreach (var t in QueState)
+                ResultCount++;
+                int[][] ar = StackState.ToArray<int[]>();
+                for (int i = ar.Length - 1; i >= 0; i--)
                 {
-                    rs += t[0] + "," + t[1] + "," + t[2]+ " -> ";
+                    var t = ar[i];
+                    rs += t[0] + "," + t[1] + "," + t[2] + " -> ";
                 }
-                Console.WriteLine(rs.TrimEnd(" -> ".ToArray()));
+                Console.WriteLine("第"+ResultCount+"个移动方案："+rs.TrimEnd(" -> ".ToArray()));
+                Console.WriteLine();
+                return;
             }
             for (var j = 0; j < 3; j++)
             {                //所有的倒水方案即为桶编号的全排列
@@ -53,19 +52,19 @@ namespace Sai.Cos.DivideWater
                         var next = DumpWater(curr, i, j);
                         if (!IsStateExist(next))
                         {        //找到新状态
-                            states.Enqueue(next);
+                            states.Push(next);
                             SeachState(states);
-                            states.Dequeue();
+                            states.Pop();
                         }
                     }
                 }
             }
         }
 
-        static Queue<int[]> QueState = new Queue<int[]>();
         public static bool CanTakeDumpAction(int[] curr, int from, int to)
         {
-            if (from >= 0 && from < 3 && to >= 0 && to < 3)
+            if (from >= 0 && from < 3
+                && to >= 0 && to < 3)
             {
                 if (from != to && curr[from] > 0 && curr[to] < FullBacket[to])
                 {
@@ -77,22 +76,21 @@ namespace Sai.Cos.DivideWater
 
         static int[] DumpWater(int[] curr, int from, int to)
         {
-            int[] next = new int[3]; ;// curr.slice();        //js对象为引用传值，这里要复制一份
+            int[] next = new int[3];
             Array.Copy(curr, next, curr.Length);
-            var dump_water = FullBacket[to] - curr[to] > curr[from] ? curr[from] : FullBacket[to] - curr[to];            //倒水量的计算
-            next[from] = curr[from]- dump_water;
-            next[to] = curr[to]+ dump_water;
+            var dump_water = FullBacket[to] - curr[to] > curr[from] ? curr[from] : FullBacket[to] - curr[to]; //倒水量的计算
+            next[from] = curr[from] - dump_water;
+            next[to] = curr[to] + dump_water;
             return next;
         }
 
         static bool IsStateExist(int[] state)
         {
-            int[][] ar = QueState.ToArray<int[]>();
-            for (var i = 0; i < QueState.Count; i++)
+            foreach (var ar in StackState)
             {
-                if (state[0] == ar[i][0]
-                    && state[1] == ar[i][1]
-                    && state[2] == ar[i][2])
+                if (state[0] == ar[0]
+                    && state[1] == ar[1]
+                    && state[2] == ar[2])
                 {
                     return true;
                 }
